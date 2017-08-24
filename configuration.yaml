@@ -1,0 +1,143 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Home
+  # Location required to calculate the time the sun rises and sets
+  latitude: 32.0667
+  longitude: 34.7667
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: 10
+  # metric for Metric, imperial for Imperial
+  unit_system: metric
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: Asia/Jerusalem
+
+# Show links to resources in log and frontend
+#introduction:
+
+# Enables the frontend
+frontend:
+
+http:
+  # Uncomment this to add a password (recommended!)
+  api_password: !secret api_password
+  # Uncomment this if you are using SSL or running in Docker etc
+  # base_url: example.duckdns.org:8123
+
+# Checks for available updates
+updater:
+
+# Enable logger
+#logger:
+
+# Discover some devices automatically
+discovery:
+
+# Allows you to issue voice commands from the frontend in enabled browsers
+conversation:
+
+# Enables support for tracking state changes over time.
+history:
+
+# View all events in a logbook
+logbook:
+
+# Track the sun
+sun:
+
+# Weather Prediction
+#sensor:
+#  platform: yr
+
+# Text to speech
+tts:
+  platform: google
+
+config:
+
+mqtt:
+
+switch:
+  - platform: mqtt
+    name: "living_room_lamp1"
+    command_topic: "homie/5ccf7f964e41/switch/on/set"
+    qos: 0
+    payload_on: "true"
+    payload_off: "false"
+    optimistic: false
+  - platform: mqtt
+    name: "bed_room_lamp1"
+    command_topic: "homie/6001941687cb/switch/on/set"
+    qos: 0
+    payload_on: "true"
+    payload_off: "false"
+    optimistic: false
+  - platform: mqtt
+    name: "living_room_string_lamps"
+    command_topic: "homie/5ccf7f973c35/switch/on/set"
+    qos: 0
+    payload_on: "true"
+    payload_off: "false"
+    optimistic: false
+  - platform: mqtt
+    name: "bed_room_floor_lamp"
+    command_topic: "homie/5ccf7f9720c9/switch/on/set"
+    qos: 0
+    payload_on: "true"
+    payload_off: "false"
+    optimistic: false
+
+device_tracker:
+   - platform: nmap_tracker
+     hosts: 192.168.1.1-255
+     track_new_devices: no
+     consider_home: 600
+     interval_seconds: 10
+     home_interval: 5
+     scan_options: " --privileged -sP "
+
+group:
+  living_room:
+    entities:
+      - switch.living_room_lamp1
+      - switch.living_room_string_lamps
+  bed_room:
+    entities:
+      - switch.bed_room_lamp1
+      - switch.bed_room_floor_lamp
+
+automation:
+  - alias: 'Turn on living tooms lights when I arrive home past dusk'
+    trigger:
+      - platform: state
+        entity_id: device_tracker.android2e4189446fb3fa72
+        from: 'not_home'
+        to: 'home'
+    condition:
+      condition: time
+      after: '18:00:00'
+      before: '06:00:00'
+    action:
+      - service: switch.turn_on
+        entity_id: group.living_room
+  - alias: 'Turn off all lights when I leave home'
+    trigger:
+      - platform: state
+        entity_id: device_tracker.android2e4189446fb3fa72
+        from: 'home'
+        to: 'not_home'
+    action:
+      - service: switch.turn_off
+        entity_id:
+          - group.living_room
+          - group.bed_room
+
+
+panel_iframe:      
+  kodi:
+    title: 'Kodi'
+    icon: mdi:kodi
+    url: 'http://pc:8080'      
+  vlc:
+    title: 'VLC'
+    icon: mdi:vlc
+    url: 'http://pc:8081'
